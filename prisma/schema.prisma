@@ -1,0 +1,170 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Address {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  line1      String
+  line2      String?
+  city       String
+  country    String
+  postalCode String
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  orders Order[]
+}
+
+model User {
+  id        String    @id @default(uuid())
+  firstName String
+  lastName  String
+  email     String    @unique
+  password  String
+  orders    Order[]
+  cart      Cart?
+  address   Address[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model Product {
+  id             String      @id @default(uuid())
+  name           String
+  description    String
+  price          Decimal     @db.Decimal(10, 2)
+  imageUrl       String
+  categories     Category[]  @relation("CategoryToProduct")
+  brandId        String
+  brand          Brand       @relation(fields: [brandId], references: [id])
+  orderItems     OrderItem[]
+  cartItems      CartItem[]
+  availableStock Int
+  reservedStock  Int         @default(0)
+  isActive       Boolean     @default(true)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@unique([name, brandId])
+}
+
+model Category {
+  id        String    @id @default(uuid())
+  name      String
+  products  Product[] @relation("CategoryToProduct")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model Brand {
+  id        String    @id @default(uuid())
+  name      String
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum PaymentProvider {
+  PAYMOB
+  COD
+}
+
+enum PaymentMethod {
+  CARD
+  CASH_ON_DELIVERY
+}
+
+model OrderItem {
+  id        String    @id @default(uuid())
+  orderId   String
+  order     Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product   @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Decimal   @db.Decimal(10, 2)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model Order {
+  id              String      @id @default(uuid())
+  status          OrderStatus @default(PENDING)
+  totalPrice      Decimal     @db.Decimal(10, 2)
+  shippingAddress String
+  userId          String
+  user            User        @relation(fields: [userId], references: [id])
+  orderItems      OrderItem[]
+  payment         Payment?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  address         Address?    @relation(fields: [addressId], references: [id])
+  addressId       String?
+
+  @@index([userId])
+}
+
+model Cart {
+  id        String     @id @default(uuid())
+  userId    String     @unique
+  user      User       @relation(fields: [userId], references: [id])
+  cartItems CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([userId])
+}
+
+model CartItem {
+  id        String    @id @default(uuid())
+  cartId    String
+  cart      Cart      @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product   @relation(fields: [productId], references: [id])
+  quantity  Int
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([cartId])
+}
+
+model Payment {
+  id            String          @id @default(uuid())
+  orderId       String          @unique
+  order         Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  amount        Decimal         @db.Decimal(10, 2)
+  provider      PaymentProvider
+  status        PaymentStatus   @default(PENDING)
+  paymentLink   String?
+  providerRef   String
+  failureReason String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+}
