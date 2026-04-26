@@ -42,7 +42,7 @@ model Product {
   description    String
   price          Decimal     @db.Decimal(10, 2)
   imageUrl       String
-  categories     Category[]  @relation("CategoryToProduct")
+  categories     Category[]
   brandId        String
   brand          Brand       @relation(fields: [brandId], references: [id])
   orderItems     OrderItem[]
@@ -53,13 +53,13 @@ model Product {
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
 
-  @@unique([name, brandId])
+  @@unique([name])
 }
 
 model Category {
   id        String    @id @default(uuid())
   name      String
-  products  Product[] @relation("CategoryToProduct")
+  products  Product[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
