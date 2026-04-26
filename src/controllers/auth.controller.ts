@@ -1,0 +1,53 @@
+import type { Request, Response } from "express";
+import { prisma } from "../data/db.js";
+import bcrypt from "bcryptjs";
+
+export const register = async (req: Request, res: Response) => {
+  const { firstName, lastName, email, password } = req.body;
+
+  // check if user already exists
+  const user = await prisma.user.findUnique({
+    where: { email },
+  });
+  if (user) {
+    return res.status(400).json({ message: "User already exists" });
+  }
+
+  // hash password
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(password, salt);
+
+  const newUser = await prisma.user.create({
+    data: {
+      firstName,
+      lastName,
+      email,
+      password: hashedPassword,
+    },
+  });
+
+  return res
+    .status(200)
+    .json({ message: "User created successfully", user: newUser });
+};
+
+
+export const login = async (req: Request, res: Response) => {
+  const { email, password } = req.body;
+
+  // check if user already exists
+  const user = await prisma.user.findUnique({
+    where: { email },
+  });
+  if (!user) {
+    return res.status(400).json({ message: "Invalid credentials" });
+  }
+
+  // check if password is correct
+  const isPasswordCorrect = await bcrypt.compare(password, user.password);
+  if (!isPasswordCorrect) {
+    return res.status(400).json({ message: "Invalid credentials" });
+  }
+
+  return res.status(200).json({ message: "Login successful", user: user });
+};
