@@ -10,7 +10,8 @@ import { success } from "../utils/success";
 import { badRequest } from "../utils/badRequest";
 
 export const getProducts = async (req: Request, res: Response) => {
-  const { page = "1", limit = "10" } = req.query;
+  const { page, limit } = req.query;
+
   const products = await prisma.product.findMany({
     skip: (parseInt(page as string) - 1) * parseInt(limit as string),
     take: parseInt(limit as string),
@@ -130,7 +131,6 @@ export const updateProduct = async (req: Request, res: Response) => {
   };
   return success(res, response);
 };
-
 
 export const deleteProduct = async (req: Request, res: Response) => {
   const { id } = req.params;

@@ -5,11 +5,17 @@ import authRoutes from "./routes/auth.routes";
 import productsRoutes from "./routes/products.routes";
 import categoriesRoutes from "./routes/categories.routes";
 import brandsRoutes from "./routes/brands.routes";
-
+import cors from "cors";
 connectDB();
 
 const app = express();
-
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }),
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
